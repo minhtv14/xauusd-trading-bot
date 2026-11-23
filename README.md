@@ -57,13 +57,33 @@ pip install -r requirements.txt
 ### 3. Set Up the `.env` File
 
 Create a `.env` file to store data such as your MetaTrader 5 credentials and trading parameters. Here's an example of what the `.env` file should look like:
-  > ACCOUNT=your_account_number
-  > PASSWORD=your_password
-  > SERVER=your_server_name
-  > PIP_SIZE=0.10
-  > STOP_LOSS_PIPS=15
-  > TAKE_PROFIT_PIPS=10
-  > LOT_SIZE=0.1
+
+```dotenv
+MT5_ACCOUNT=your_account_number
+MT5_PASSWORD=your_password
+MT5_SERVER=your_server_name
+SYMBOL=XAUUSD
+PIP_SIZE=0.10
+STOP_LOSS_PIPS=15
+TAKE_PROFIT_PIPS=10
+REVERSE_TRADES=0
+LOT_SIZE=0.1
+NEWS_BEFORE_MINUTES=30
+NEWS_AFTER_MINUTES=30
+```
+
+Use the exact server name shown for your account in the MetaTrader 5 terminal. Set `SYMBOL` to the name your broker uses for XAU/USD.
+
+Set `REVERSE_TRADES=1` to turn BUY signals into SELL orders and SELL signals into BUY orders. The bot uses the original take-profit price as the new stop loss and the original stop-loss price as the new take profit. Restart the bot to apply the setting to new orders.
+
+### U.S. economic releases
+
+The bot loads the official [BLS iCalendar](https://www.bls.gov/help/hlpiCAL.htm), [BEA release calendar](https://www.bea.gov/news/schedule/icalendar), and [Federal Reserve monthly calendar](https://www.federalreserve.gov/newsevents/calendar.htm). It uses releases with published times, including FOMC statements, press conferences and minutes, the Beige Book, and Fed statistical releases. It accounts for changes between standard time and daylight saving time in New York. Calendar times in the log use the computer's local time zone.
+
+- By default, the bot blocks new orders from 30 minutes before each release until 30 minutes after it. Adjust `NEWS_BEFORE_MINUTES` and `NEWS_AFTER_MINUTES` in `.env`.
+- At the start of the blackout, the bot attempts to close its positions for `SYMBOL` and retries about every five seconds while it is running. If MT5 cannot confirm closure, the bot keeps new entries paused. On netting accounts, positions that combine bot and other trades require manual handling.
+- The bot loads the schedules at startup and refreshes them once each day at local midnight. If a source fails, new orders pause while the bot retries that source every minute. Previously loaded release windows still trigger close attempts.
+- If BLS denies the automated download, download the [official BLS calendar file](https://www.bls.gov/schedule/news_release/bls.ics) and set `BLS_CALENDAR_FILE=bls.ics` in `.env` if you save it in the project directory. When loading the fallback file, the bot checks that it was updated within the last 24 hours and covers the required dates.
 
 ## 🛠 Contributing
 
